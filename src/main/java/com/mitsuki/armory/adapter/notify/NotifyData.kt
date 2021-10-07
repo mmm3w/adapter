@@ -4,6 +4,7 @@ import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import java.util.*
 import com.mitsuki.armory.adapter.calculateDiff
 
 sealed class NotifyData<T> {
@@ -87,7 +88,7 @@ sealed class NotifyData<T> {
         }
     }
 
-    class Clear<T>(): NotifyData<T>() {
+    class Clear<T>() : NotifyData<T>() {
         @MainThread
         override fun dispatchUpdates(source: MutableList<T>, adapter: RecyclerView.Adapter<*>) {
             val count = source.size
@@ -114,7 +115,7 @@ sealed class NotifyData<T> {
     }
 
     class ChangeIf<T>(private val filter: (T) -> Boolean, private val action: T.() -> Unit) :
-        NotifyData<T>() {
+            NotifyData<T>() {
         private lateinit var diffResult: DiffUtil.DiffResult
         private lateinit var newData: List<T>
 
@@ -147,6 +148,22 @@ sealed class NotifyData<T> {
             source.clear()
             source.addAll(newData)
             diffResult.dispatchUpdatesTo(adapter)
+        }
+    }
+
+    class Move<T>(private val fromPosition: Int, private val toPosition: Int) : NotifyData<T>() {
+        @MainThread
+        override fun dispatchUpdates(source: MutableList<T>, adapter: RecyclerView.Adapter<*>) {
+            if (fromPosition < toPosition) {
+                for (i in fromPosition until toPosition) {
+                    Collections.swap(mData, i, i + 1)
+                }
+            } else {
+                for (i in fromPosition downTo toPosition + 1) {
+                    Collections.swap(mData, i, i - 1)
+                }
+            }
+            adapter.notifyItemMoved(fromPosition, toPosition)
         }
     }
 }
