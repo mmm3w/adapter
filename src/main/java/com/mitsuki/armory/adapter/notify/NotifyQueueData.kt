@@ -37,6 +37,8 @@ class NotifyQueueData<T>(private val diffCallback: DiffUtil.ItemCallback<T>) {
             is NotifyData.RemoveAt,
             is NotifyData.Remove,
             is NotifyData.Change,
+            is NotifyData.Clear,
+            is NotifyData.Move,
             is NotifyData.ChangeAt -> applyNotify(data)
             is NotifyData.RangeRemove,
             is NotifyData.ChangeIf,
