@@ -156,11 +156,11 @@ sealed class NotifyData<T> {
         override fun dispatchUpdates(source: MutableList<T>, adapter: RecyclerView.Adapter<*>) {
             if (fromPosition < toPosition) {
                 for (i in fromPosition until toPosition) {
-                    Collections.swap(mData, i, i + 1)
+                    Collections.swap(source, i, i + 1)
                 }
             } else {
                 for (i in fromPosition downTo toPosition + 1) {
-                    Collections.swap(mData, i, i - 1)
+                    Collections.swap(source, i, i - 1)
                 }
             }
             adapter.notifyItemMoved(fromPosition, toPosition)
