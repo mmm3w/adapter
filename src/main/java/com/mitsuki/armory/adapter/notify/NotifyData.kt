@@ -87,6 +87,15 @@ sealed class NotifyData<T> {
         }
     }
 
+    class Clear<T>(): NotifyData<T>() {
+        @MainThread
+        override fun dispatchUpdates(source: MutableList<T>, adapter: RecyclerView.Adapter<*>) {
+            val count = source.size
+            source.clear()
+            adapter.notifyItemRangeRemoved(0, count)
+        }
+    }
+
     class Change<T>(private val index: Int, private val data: T) : NotifyData<T>() {
         @WorkerThread
         override fun dispatchUpdates(source: MutableList<T>, adapter: RecyclerView.Adapter<*>) {
