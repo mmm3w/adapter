@@ -4,6 +4,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.mitsuki.armory.adapter.notify.AttachedAnchor
 import com.mitsuki.armory.adapter.notify.NotifyData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -11,7 +12,10 @@ import kotlinx.coroutines.withContext
 import java.lang.ref.WeakReference
 import java.util.ArrayDeque
 
-class NotifyQueueData<T>(private val diffCallback: DiffUtil.ItemCallback<T>) {
+class NotifyQueueData<T>(
+    private val diffCallback: DiffUtil.ItemCallback<T>,
+    private val updateAfterAttached: Boolean = true
+) {
 
     private val mData = arrayListOf<T>()
 
@@ -27,6 +31,14 @@ class NotifyQueueData<T>(private val diffCallback: DiffUtil.ItemCallback<T>) {
     }
 
     suspend fun postUpdate(data: NotifyData<T>) {
+        if (updateAfterAttached){
+            val adapter = targetAdapter?.get()
+            if (adapter is AttachedAnchor && !adapter.isAttached) {
+                data.directUpdate(mData)
+                return
+            }
+        }
+
         pendingUpdates.add(data)
         if (pendingUpdates.size > 1) return
         updateData(data)
@@ -63,5 +75,9 @@ class NotifyQueueData<T>(private val diffCallback: DiffUtil.ItemCallback<T>) {
 
     fun attachAdapter(adapter: RecyclerView.Adapter<*>) {
         targetAdapter = WeakReference(adapter)
+    }
+
+    fun isEmpty(): Boolean {
+        return count == 0
     }
 }

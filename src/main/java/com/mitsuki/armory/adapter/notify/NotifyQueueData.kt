@@ -9,21 +9,34 @@ import androidx.recyclerview.widget.RecyclerView
 import java.lang.ref.WeakReference
 import java.util.ArrayDeque
 
-class NotifyQueueData<T>(private val diffCallback: DiffUtil.ItemCallback<T>) {
+class NotifyQueueData<T>(
+    private val diffCallback: DiffUtil.ItemCallback<T>,
+    private val updateAfterAttached: Boolean = true
+) {
 
     private val mData = arrayListOf<T>()
+
     val count get() = mData.size
+
     fun item(index: Int) = mData[index]
 
     private val mDelivery: Handler by lazy { Handler(Looper.getMainLooper()) }
     private val mWorkThread: HandlerThread by lazy { HandlerThread("NotifyQueueData").apply { start() } }
-    private val mHanlder = Handler(mWorkThread.looper)
+    private val mHandler = Handler(mWorkThread.looper)
 
     private val pendingUpdates: ArrayDeque<NotifyData<T>> = ArrayDeque()
     private var targetAdapter: WeakReference<RecyclerView.Adapter<*>>? = null
 
     @MainThread
     fun postUpdate(data: NotifyData<T>) {
+        if (updateAfterAttached) {
+            val adapter = targetAdapter?.get()
+            if (adapter is AttachedAnchor && !adapter.isAttached) {
+                data.directUpdate(mData)
+                return
+            }
+        }
+
         pendingUpdates.add(data)
         if (pendingUpdates.size > 1) return
         updateData(data)
@@ -43,7 +56,7 @@ class NotifyQueueData<T>(private val diffCallback: DiffUtil.ItemCallback<T>) {
             is NotifyData.RangeRemove,
             is NotifyData.ChangeIf,
             is NotifyData.Refresh -> {
-                mHanlder.post {
+                mHandler.post {
                     data.calculateDiff(mData, diffCallback)
                     mDelivery.post { applyNotify(data) }
                 }
@@ -62,5 +75,9 @@ class NotifyQueueData<T>(private val diffCallback: DiffUtil.ItemCallback<T>) {
 
     fun attachAdapter(adapter: RecyclerView.Adapter<*>) {
         targetAdapter = WeakReference(adapter)
+    }
+
+    fun isEmpty(): Boolean {
+        return count == 0
     }
 }

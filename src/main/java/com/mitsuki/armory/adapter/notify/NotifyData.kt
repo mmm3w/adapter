@@ -15,6 +15,8 @@ sealed class NotifyData<T> {
     @MainThread
     abstract fun dispatchUpdates(source: MutableList<T>, adapter: RecyclerView.Adapter<*>)
 
+    abstract fun directUpdate(source: MutableList<T>)
+
     class Insert<T>(private val data: T, private val index: Int = -1) : NotifyData<T>() {
         @MainThread
         override fun dispatchUpdates(source: MutableList<T>, adapter: RecyclerView.Adapter<*>) {
@@ -27,6 +29,10 @@ sealed class NotifyData<T> {
                 source.add(index, data)
             }
             adapter.notifyItemInserted(position)
+        }
+
+        override fun directUpdate(source: MutableList<T>) {
+            if (index < 0) source.add(data) else source.add(index, data)
         }
     }
 
@@ -43,6 +49,10 @@ sealed class NotifyData<T> {
             }
             adapter.notifyItemRangeInserted(position, data.size)
         }
+
+        override fun directUpdate(source: MutableList<T>) {
+            if (index < 0) source.addAll(data) else source.addAll(index, data)
+        }
     }
 
     class RemoveAt<T>(private val index: Int, private val count: Int = 1) : NotifyData<T>() {
@@ -56,6 +66,11 @@ sealed class NotifyData<T> {
                 adapter.notifyItemRangeRemoved(index, count)
             }
         }
+
+        override fun directUpdate(source: MutableList<T>) {
+            if (count == 1) source.removeAt(index)
+            else if (count > 1) source.subList(index, index + count - 1).clear()
+        }
     }
 
     class Remove<T>(private val data: T) : NotifyData<T>() {
@@ -65,6 +80,13 @@ sealed class NotifyData<T> {
             if (position >= 0) {
                 source.removeAt(position)
                 adapter.notifyItemRemoved(position)
+            }
+        }
+
+        override fun directUpdate(source: MutableList<T>) {
+            val position = source.indexOf(data)
+            if (position >= 0) {
+                source.removeAt(position)
             }
         }
     }
@@ -86,14 +108,22 @@ sealed class NotifyData<T> {
             source.addAll(newData)
             diffResult.dispatchUpdatesTo(adapter)
         }
+
+        override fun directUpdate(source: MutableList<T>) {
+            source.removeAll(data)
+        }
     }
 
-    class Clear<T>() : NotifyData<T>() {
+    class Clear<T> : NotifyData<T>() {
         @MainThread
         override fun dispatchUpdates(source: MutableList<T>, adapter: RecyclerView.Adapter<*>) {
             val count = source.size
             source.clear()
             adapter.notifyItemRangeRemoved(0, count)
+        }
+
+        override fun directUpdate(source: MutableList<T>) {
+            source.clear()
         }
     }
 
@@ -104,6 +134,11 @@ sealed class NotifyData<T> {
             source.add(index, data)
             adapter.notifyItemChanged(index)
         }
+
+        override fun directUpdate(source: MutableList<T>) {
+            source.removeAt(index)
+            source.add(index, data)
+        }
     }
 
     class ChangeAt<T>(private val index: Int, private val action: T.() -> Unit) : NotifyData<T>() {
@@ -112,10 +147,14 @@ sealed class NotifyData<T> {
             source[index]?.apply(action)
             adapter.notifyItemChanged(index)
         }
+
+        override fun directUpdate(source: MutableList<T>) {
+            source[index]?.apply(action)
+        }
     }
 
     class ChangeIf<T>(private val filter: (T) -> Boolean, private val action: T.() -> Unit) :
-            NotifyData<T>() {
+        NotifyData<T>() {
         private lateinit var diffResult: DiffUtil.DiffResult
         private lateinit var newData: List<T>
 
@@ -131,6 +170,10 @@ sealed class NotifyData<T> {
             source.clear()
             source.addAll(newData)
             diffResult.dispatchUpdatesTo(adapter)
+        }
+
+        override fun directUpdate(source: MutableList<T>) {
+            source.forEach { if (filter(it)) it.apply(action) }
         }
     }
 
@@ -149,6 +192,11 @@ sealed class NotifyData<T> {
             source.addAll(newData)
             diffResult.dispatchUpdatesTo(adapter)
         }
+
+        override fun directUpdate(source: MutableList<T>) {
+            source.clear()
+            source.addAll(newData)
+        }
     }
 
     class Move<T>(private val fromPosition: Int, private val toPosition: Int) : NotifyData<T>() {
@@ -164,6 +212,18 @@ sealed class NotifyData<T> {
                 }
             }
             adapter.notifyItemMoved(fromPosition, toPosition)
+        }
+
+        override fun directUpdate(source: MutableList<T>) {
+            if (fromPosition < toPosition) {
+                for (i in fromPosition until toPosition) {
+                    Collections.swap(source, i, i + 1)
+                }
+            } else {
+                for (i in fromPosition downTo toPosition + 1) {
+                    Collections.swap(source, i, i - 1)
+                }
+            }
         }
     }
 }
