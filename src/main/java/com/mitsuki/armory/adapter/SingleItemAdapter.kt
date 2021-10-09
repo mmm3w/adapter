@@ -5,7 +5,8 @@ import android.view.ViewGroup
 import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
 
-abstract class SingleItemAdapter(enable: Boolean) : RecyclerView.Adapter<SingleItemAdapter.ViewHolder>() {
+abstract class SingleItemAdapter(enable: Boolean) :
+    RecyclerView.Adapter<SingleItemAdapter.ViewHolder>() {
 
     open var isEnable: Boolean = enable
         set(value) {
@@ -20,8 +21,8 @@ abstract class SingleItemAdapter(enable: Boolean) : RecyclerView.Adapter<SingleI
         }
 
     abstract val layoutRes: Int
-    abstract val onViewHolderCreate: ViewHolder.() -> Unit
-    abstract val onViewHolderBind: ViewHolder.() -> Unit
+    open val onViewHolderCreate: ViewHolder.() -> Unit = {}
+    open val onViewHolderBind: ViewHolder.() -> Unit = {}
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(parent, layoutRes).apply(onViewHolderCreate)
@@ -33,6 +34,8 @@ abstract class SingleItemAdapter(enable: Boolean) : RecyclerView.Adapter<SingleI
         holder.apply(onViewHolderBind)
     }
 
-    class ViewHolder(parent: ViewGroup, @LayoutRes layoutRes: Int) :
-            RecyclerView.ViewHolder(LayoutInflater.from(parent.context).inflate(layoutRes, parent, false))
+    open class ViewHolder(parent: ViewGroup, @LayoutRes layoutRes: Int) :
+        RecyclerView.ViewHolder(
+            LayoutInflater.from(parent.context).inflate(layoutRes, parent, false)
+        )
 }
