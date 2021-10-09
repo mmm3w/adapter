@@ -7,7 +7,11 @@ import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 
-abstract class SingleItemBindingAdapter<VB : ViewBinding>(enable: Boolean) :
+open class SingleItemBindingAdapter<VB : ViewBinding>(
+    private val layoutRes: Int,
+    private val bind: (View) -> VB,
+    enable: Boolean = true
+) :
     RecyclerView.Adapter<SingleItemBindingAdapter.ViewHolder<VB>>() {
 
     open var isEnable: Boolean = enable
@@ -22,8 +26,6 @@ abstract class SingleItemBindingAdapter<VB : ViewBinding>(enable: Boolean) :
             }
         }
 
-    abstract val layoutRes: Int
-    abstract val bind: (View) -> VB
     open val onViewHolderCreate: ViewHolder<VB>.() -> Unit = {}
     open val onViewHolderBind: ViewHolder<VB>.() -> Unit = {}
 
