@@ -1,4 +1,4 @@
 def module_version = [:]
-module_version.code = 3
-module_version.name = "1.0.2"
+module_version.code = 4
+module_version.name = "1.0.3"
 ext.module_version = module_version
