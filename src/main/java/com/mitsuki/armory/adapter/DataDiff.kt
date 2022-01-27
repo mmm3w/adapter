@@ -1,6 +1,7 @@
 package com.mitsuki.armory.adapter
 
 import androidx.recyclerview.widget.DiffUtil
+import java.util.ArrayList
 
 class DataDiff<T>(
     private val diff: DiffUtil.ItemCallback<T>,
@@ -36,7 +37,7 @@ fun <T> calculateDiff(
     oldList: List<T>,
     newList: List<T>
 ): DiffUtil.DiffResult {
-    return DiffUtil.calculateDiff(DataDiff(diff, oldList, newList))
+    return DiffUtil.calculateDiff(DataDiff(diff, ArrayList(oldList), ArrayList(newList)))
 }
 
 fun <T> calculateDiff(
