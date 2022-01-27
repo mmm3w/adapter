@@ -22,7 +22,12 @@ class DataDiff<T>(
         val oldItem = oldList[oldItemPosition] ?: return newList[newItemPosition] == null
         val newItem = newList[newItemPosition] ?: return false
         return diff.areContentsTheSame(oldItem, newItem)
+    }
 
+    override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
+        val oldItem = oldList[oldItemPosition] ?: return null
+        val newItem = newList[newItemPosition] ?: return null
+        return diff.getChangePayload(oldItem, newItem)
     }
 }
 

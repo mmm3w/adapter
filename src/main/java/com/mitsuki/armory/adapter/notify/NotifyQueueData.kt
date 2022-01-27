@@ -21,7 +21,7 @@ class NotifyQueueData<T>(
     fun item(index: Int) = mData[index]
 
     private val mDelivery: Handler by lazy { Handler(Looper.getMainLooper()) }
-    private val mWorkThread: HandlerThread by lazy { HandlerThread("NotifyQueueData").apply { start() } }
+    private val mWorkThread: HandlerThread by lazy { HandlerThread("M_NotifyQueueData").apply { start() } }
     private val mHandler = Handler(mWorkThread.looper)
 
     private val pendingUpdates: ArrayDeque<NotifyData<T>> = ArrayDeque()

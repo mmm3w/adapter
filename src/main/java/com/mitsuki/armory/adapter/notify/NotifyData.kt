@@ -127,12 +127,13 @@ sealed class NotifyData<T> {
         }
     }
 
-    class Change<T>(private val index: Int, private val data: T) : NotifyData<T>() {
+    class Change<T>(private val index: Int, private val data: T, private val payload: Any? = null) :
+        NotifyData<T>() {
         @WorkerThread
         override fun dispatchUpdates(source: MutableList<T>, adapter: RecyclerView.Adapter<*>) {
             source.removeAt(index)
             source.add(index, data)
-            adapter.notifyItemChanged(index)
+            adapter.notifyItemChanged(index, payload)
         }
 
         override fun directUpdate(source: MutableList<T>) {
@@ -141,11 +142,15 @@ sealed class NotifyData<T> {
         }
     }
 
-    class ChangeAt<T>(private val index: Int, private val action: T.() -> Unit) : NotifyData<T>() {
+    class ChangeAt<T>(
+        private val index: Int,
+        private val action: T.() -> Unit,
+        private val payload: Any? = null
+    ) : NotifyData<T>() {
         @WorkerThread
         override fun dispatchUpdates(source: MutableList<T>, adapter: RecyclerView.Adapter<*>) {
             source[index]?.apply(action)
-            adapter.notifyItemChanged(index)
+            adapter.notifyItemChanged(index, payload)
         }
 
         override fun directUpdate(source: MutableList<T>) {
