@@ -5,7 +5,6 @@ import androidx.annotation.WorkerThread
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import java.util.*
-import com.mitsuki.armory.adapter.calculateDiff
 
 sealed class NotifyData<T> {
     @WorkerThread
@@ -144,28 +143,30 @@ sealed class NotifyData<T> {
 
     class ChangeAt<T>(
         private val index: Int,
-        private val action: T.() -> Unit,
+        private val action: (T) -> T,
         private val payload: Any? = null
     ) : NotifyData<T>() {
         @WorkerThread
         override fun dispatchUpdates(source: MutableList<T>, adapter: RecyclerView.Adapter<*>) {
-            source[index]?.apply(action)
+            val temp = source[index]
+            source[index] = action(temp)
             adapter.notifyItemChanged(index, payload)
         }
 
         override fun directUpdate(source: MutableList<T>) {
-            source[index]?.apply(action)
+            val temp = source[index]
+            source[index] = action(temp)
         }
     }
 
-    class ChangeIf<T>(private val filter: (T) -> Boolean, private val action: T.() -> Unit) :
+    class ChangeIf<T>(private val filter: (T) -> Boolean, private val action: (T) -> T) :
         NotifyData<T>() {
         private lateinit var diffResult: DiffUtil.DiffResult
         private lateinit var newData: List<T>
 
         @WorkerThread
         override fun calculateDiff(source: MutableList<T>, diffCallback: DiffUtil.ItemCallback<T>) {
-            newData = ArrayList(source).onEach { if (filter(it)) it.apply(action) }
+            newData = ArrayList(source).map { if (filter(it)) action(it) else it }
             diffResult = calculateDiff(diffCallback, source, newData)
         }
 
@@ -178,7 +179,9 @@ sealed class NotifyData<T> {
         }
 
         override fun directUpdate(source: MutableList<T>) {
-            source.forEach { if (filter(it)) it.apply(action) }
+            val new = ArrayList(source).map { if (filter(it)) action(it) else it }
+            source.clear()
+            source.addAll(new)
         }
     }
 
